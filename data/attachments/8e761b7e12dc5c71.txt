@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation "Main navigation" [ref=e4]:
+    - generic [ref=e5]:
+      - link "Todo App Home" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - text: 📋 Todo App
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link "Go to login page" [ref=e10] [cursor=pointer]:
+            - /url: /login
+            - text: Login
+        - listitem [ref=e11]:
+          - link "Go to registration page" [ref=e12] [cursor=pointer]:
+            - /url: /register
+            - text: Register
+  - generic [ref=e13]:
+    - link "Skip to main content" [ref=e14] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e18]:
+      - heading "Reset Password" [level=1] [ref=e19]
+      - alert [ref=e20]: Validation failed
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23]: Reset Token *
+          - textbox "Reset Token required" [ref=e24]:
+            - /placeholder: Enter the token you received
+            - text: 32a4b4170ac0f3ec3bdd2290b954d1bde5ef7a4feb51a859c4bd8547a0f7590a
+          - text: Enter the reset token from the forgot password page
+        - generic [ref=e25]:
+          - generic [ref=e26]: New Password *
+          - textbox "New Password required" [ref=e27]:
+            - /placeholder: Enter new password
+            - text: NewResetPwd1768157948330@123
+          - text: At least 6 characters with uppercase, lowercase, and number
+        - generic [ref=e28]:
+          - generic [ref=e29]: Confirm Password *
+          - textbox "Confirm Password required" [ref=e30]:
+            - /placeholder: Confirm new password
+            - text: NewResetPwd1768157948330@123
+        - button "Reset Password" [ref=e32] [cursor=pointer]
+      - separator [ref=e33]
+      - link "Back to Login" [ref=e35] [cursor=pointer]:
+        - /url: /login
+```
