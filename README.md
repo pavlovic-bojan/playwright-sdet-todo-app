@@ -2,6 +2,9 @@
 
 Professional test automation framework for Todo application using Playwright, TypeScript, and best practices for SDET (Software Development Engineer in Test).
 
+📊 **Latest Allure Report**: [View Online](https://pavlovic-bojan.github.io/playwright-sdet-todo-app/)
+
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
