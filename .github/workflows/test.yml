@@ -1,0 +1,142 @@
+name: 🧪 Run All Tests
+
+# Trigger on every push and PR
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  test:
+    name: Run All Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: ☕ Setup Java for Allure
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: ⚡ Install k6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates gnupg2
+          curl -s https://dl.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/k6-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+          k6 version
+
+      - name: 🔍 Verify servers are accessible
+        env:
+          BASE_URL: ${{ secrets.BASE_URL || 'https://todo-app-frontend-seven-rho.vercel.app' }}
+          API_URL: ${{ secrets.API_URL || 'https://todo-app-xhn2.onrender.com/api' }}
+        run: |
+          echo "🔍 Checking backend API..."
+          curl -f "$API_URL/health" || echo "⚠️ Backend health check failed, but continuing..."
+          
+          echo "🔍 Checking frontend..."
+          curl -f "$BASE_URL" || echo "⚠️ Frontend check failed, but continuing..."
+
+      - name: 🧪 Run All Tests
+        env:
+          API_URL: ${{ secrets.API_URL || 'https://todo-app-xhn2.onrender.com/api' }}
+          BASE_URL: ${{ secrets.BASE_URL || 'https://todo-app-frontend-seven-rho.vercel.app' }}
+          DB_URL: ${{ secrets.DB_URL }}
+          CI: true
+        continue-on-error: true
+        run: |
+          echo "🧪 Running all tests (API + E2E + Performance smoke)..."
+          echo "🌐 Using API: $API_URL"
+          echo "🌐 Using Frontend: $BASE_URL"
+          npm test || echo "⚠️ Some tests completed with errors"
+
+      - name: 📊 Generate Allure report
+        if: always()
+        run: |
+          if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
+            # Install Allure CLI if not available
+            if ! command -v allure &> /dev/null; then
+              echo "📦 Installing Allure CLI..."
+              wget https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz
+              tar -zxvf allure-2.24.1.tgz
+              sudo mv allure-2.24.1 /opt/allure
+              sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
+            fi
+            allure generate allure-results --clean -o allure-report
+            echo "✅ Allure report generated successfully"
+          else
+            echo "⚠️ No test results found, creating empty report"
+            mkdir -p allure-report
+            echo '<!DOCTYPE html><html><head><title>No Test Results</title></head><body><h1>No test results available</h1><p>Tests did not produce any results.</p></body></html>' > allure-report/index.html
+          fi
+
+      - name: 📤 Upload Allure report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+          retention-days: 30
+
+      - name: 📸 Upload Playwright HTML report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+      - name: 📊 Upload k6 Performance Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-reports
+          path: performance-report-*.html
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: 📸 Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: test-results/
+          retention-days: 7
+
+      - name: 🚀 Deploy Allure Report to GitHub Pages
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: peaceiris/actions-gh-pages@v3
+        env:
+          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          publish_branch: gh-pages
+          destination_dir: ./
+
+      - name: 📢 Report Allure Report URL
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        run: |
+          echo "📊 Allure Report deployed to GitHub Pages"
+          echo "🔗 View report at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"

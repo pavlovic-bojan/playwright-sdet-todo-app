@@ -1,0 +1,41 @@
+{
+  "name": "playwright-sdet-todo-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:all",
+    "test:all": "npm run test:playwright && npm run test:performance:all",
+    "test:playwright": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=e2e-chromium",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:report:allure": "allure generate allure-results --clean -o allure-report && allure open allure-report",
+    "test:report:allure:generate": "allure generate allure-results --clean -o allure-report",
+    "test:performance": "k6 run --out json=performance-results.json",
+    "test:performance:all": "npm run test:performance:smoke; npm run test:performance:load; npm run test:performance:stress; npm run test:performance:spike",
+    "test:performance:load": "k6 run --insecure-skip-tls-verify tests/performance/load/api-load.test.ts",
+    "test:performance:stress": "k6 run --insecure-skip-tls-verify tests/performance/stress/api-stress.test.ts",
+    "test:performance:spike": "k6 run --insecure-skip-tls-verify tests/performance/spike/api-spike.test.ts",
+    "test:performance:smoke": "k6 run --insecure-skip-tls-verify tests/performance/smoke/api-smoke.test.ts",
+    "test:performance:report": "echo '📊 Performance Reports:' && ls -lh performance-report-*.html 2>/dev/null || echo '⚠️ No performance reports found. Run performance tests first.'",
+    "test:performance:report:open": "open performance-report-*.html 2>/dev/null || echo '⚠️ No performance reports found. Run performance tests first.'"
+  },
+  "keywords": [],
+  "author": "Bojan Pavlovic",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/k6": "^0.48.0",
+    "@types/node": "^25.0.3",
+    "@types/pg": "^8.11.10",
+    "allure-playwright": "^2.13.0",
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
